@@ -8,23 +8,29 @@ export const seoSchemaWithoutImage = z.object({
   type: z.string().optional(),
   keywords: z.string().optional(),
   canonicalUrl: z.string().optional(),
-  twitter: z.object({
-    creator: z.string().optional(),
-  }).optional(),
+  twitter: z
+    .object({
+      creator: z.string().optional(),
+    })
+    .optional(),
   robots: z.string().optional(),
-})
+});
 
 const seoSchema = (image: ImageFunction) =>
-  z.object({
-    image: image().optional(),
-  }).merge(seoSchemaWithoutImage);
+  z
+    .object({
+      image: image().optional(),
+    })
+    .merge(seoSchemaWithoutImage);
 
 const pageCollection = defineCollection({
   loader: glob({ pattern: '**/[^_]*.{md,mdx}', base: './src/content/pages' }),
-  schema: ({ image }) => z.object({
-    title: z.string(),
-    seo: seoSchema(image),
-  }),
+  schema: ({ image }) =>
+    z.object({
+      title: z.string(),
+      description: z.string().optional(),
+      seo: seoSchema(image),
+    }),
 });
 
 const linkCollection = defineCollection({
@@ -61,12 +67,13 @@ const talkCollection = defineCollection({
 
 const postCollection = defineCollection({
   loader: glob({ pattern: '**/[^_]*.{md,mdx}', base: './src/content/posts' }),
-  schema: ({ image }) => z.object({
-    title: z.string(),
-    date: z.date(),
-    image: image().optional(),
-    seo: seoSchema(image),
-  }),
+  schema: ({ image }) =>
+    z.object({
+      title: z.string(),
+      date: z.date(),
+      image: image().optional(),
+      seo: seoSchema(image),
+    }),
 });
 
 export const collections = {
