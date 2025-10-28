@@ -34,3 +34,7 @@ export const sortJobsByDate = (jobs: CollectionEntry<'jobs'>[]) => {
     return nextEnd - currentEnd || next.data.from - current.data.from;
   });
 };
+
+export const sortTalksByYear = (talks: CollectionEntry<'talks'>[]) => {
+  return talks.sort((a, b) => b.data.year - a.data.year);
+};
