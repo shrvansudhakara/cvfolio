@@ -7,6 +7,15 @@ interface Props {
 
 const { entry } = Astro.props;
 const { Content } = await render(entry);
+
+const images = entry.data.images 
+  ? await Promise.all(
+      entry.data.images.map(async (img) => ({
+        src: img.src,
+        alt: entry.data.title,
+      }))
+    )
+  : [];
 ---
 
 <li class="py-0.5">
@@ -22,6 +31,59 @@ const { Content } = await render(entry);
       <div class="prose dark:prose-invert prose-sm">
         <Content />
       </div>
+      
+      {images.length > 0 && (
+        <div class="flex gap-2 flex-wrap mt-2">
+          {images.map((image, idx) => (
+            <button
+              class="work-image-thumb overflow-hidden rounded-lg border border-border hover:opacity-80 transition-opacity"
+              data-images={JSON.stringify(images)}
+              data-index={idx}
+            >
+              <img
+                src={image.src}
+                alt={image.alt}
+                class="w-20 h-20 object-cover"
+              />
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   </div>
 </li>
+
+<script>
+  import ImageLightbox from './ImageLightbox';
+  import { createRoot } from 'react-dom/client';
+  import { createElement } from 'react';
+
+  document.addEventListener('DOMContentLoaded', () => {
+    const thumbs = document.querySelectorAll('.work-image-thumb');
+    
+    thumbs.forEach((thumb) => {
+      thumb.addEventListener('click', () => {
+        const images = JSON.parse(thumb.getAttribute('data-images') || '[]');
+        const index = parseInt(thumb.getAttribute('data-index') || '0');
+        
+        const container = document.createElement('div');
+        document.body.appendChild(container);
+        const root = createRoot(container);
+        
+        const closeHandler = () => {
+          root.unmount();
+          document.body.removeChild(container);
+        };
+        
+        root.render(
+          createElement(ImageLightbox, {
+            images,
+            isOpen: true,
+            initialIndex: index,
+            onClose: closeHandler,
+          })
+        );
+      });
+    });
+  });
+</script>
