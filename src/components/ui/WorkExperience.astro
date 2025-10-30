@@ -57,37 +57,38 @@ const images = entry.data.images
   import { createElement } from 'react';
 
   const container = document.querySelector('.flex.gap-2.flex-wrap.mt-2');
-  if (!container) return;
   
-  const clickHandler = (event: Event) => {
-    const thumb = (event.target as HTMLElement).closest('.work-image-thumb');
-    if (!thumb || !container.contains(thumb)) return;
-    
-    const images = JSON.parse(thumb.getAttribute('data-images') || '[]');
-    const index = parseInt(thumb.getAttribute('data-index') || '0');
-    
-    const lightboxContainer = document.createElement('div');
-    document.body.appendChild(lightboxContainer);
-    const root = createRoot(lightboxContainer);
-    
-    const closeHandler = () => {
-      root.unmount();
-      try {
-        document.body.removeChild(lightboxContainer);
-      } catch (e) {
-        // Container may have already been removed; ignore error
-      }
+  if (container) {
+    const clickHandler = (event: Event) => {
+      const thumb = (event.target as HTMLElement).closest('.work-image-thumb');
+      if (!thumb || !container.contains(thumb)) return;
+      
+      const images = JSON.parse(thumb.getAttribute('data-images') || '[]');
+      const index = parseInt(thumb.getAttribute('data-index') || '0');
+      
+      const lightboxContainer = document.createElement('div');
+      document.body.appendChild(lightboxContainer);
+      const root = createRoot(lightboxContainer);
+      
+      const closeHandler = () => {
+        root.unmount();
+        try {
+          document.body.removeChild(lightboxContainer);
+        } catch (e) {
+          // Container may have already been removed; ignore error
+        }
+      };
+      
+      root.render(
+        createElement(ImageLightbox, {
+          images,
+          isOpen: true,
+          initialIndex: index,
+          onClose: closeHandler,
+        })
+      );
     };
     
-    root.render(
-      createElement(ImageLightbox, {
-        images,
-        isOpen: true,
-        initialIndex: index,
-        onClose: closeHandler,
-      })
-    );
-  };
-  
-  container.addEventListener('click', clickHandler);
+    container.addEventListener('click', clickHandler);
+  }
 </script>

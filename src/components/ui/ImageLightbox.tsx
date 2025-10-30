@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface ImageLightboxProps {
   images: { src: string; alt?: string }[];
@@ -28,7 +29,11 @@ export default function ImageLightbox({
 
     if (isOpen) {
       document.addEventListener('keydown', handleKeyDown);
-      return () => document.removeEventListener('keydown', handleKeyDown);
+      document.body.style.overflow = 'hidden';
+      return () => {
+        document.removeEventListener('keydown', handleKeyDown);
+        document.body.style.overflow = 'unset';
+      };
     }
   }, [isOpen, currentIndex]);
 
@@ -44,69 +49,87 @@ export default function ImageLightbox({
   };
 
   return (
-    <div
-      className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center"
-      onClick={onClose}
-      role="dialog"
-      aria-modal="true"
-      aria-label="Image gallery"
-    >
-      <button
-        onClick={handleClose}
-        className="absolute top-4 right-4 text-white text-2xl hover:text-gray-300 z-10"
-        aria-label="Close gallery"
-      >
-        ×
-      </button>
+    <AnimatePresence>
+      {isOpen && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.2 }}
+          className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center"
+          onClick={onClose}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Image gallery"
+        >
+          <button
+            onClick={handleClose}
+            className="absolute top-4 right-4 text-white/80 hover:text-white text-3xl w-10 h-10 flex items-center justify-center rounded-full hover:bg-white/10 transition-colors z-10"
+            aria-label="Close gallery"
+          >
+            ×
+          </button>
 
-      <div className="relative w-full h-full flex items-center justify-center p-8">
-        <img
-          src={images[currentIndex].src}
-          alt={images[currentIndex].alt || ''}
-          className="max-w-full max-h-full object-contain"
-          onClick={(e) => e.stopPropagation()}
-        />
+          <div className="relative w-full h-full flex items-center justify-center p-4 md:p-8">
+            <AnimatePresence mode="wait" custom={currentIndex}>
+              <motion.img
+                key={currentIndex}
+                src={images[currentIndex].src}
+                alt={images[currentIndex].alt || ''}
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.9 }}
+                transition={{ duration: 0.3, ease: 'easeOut' }}
+                className="max-w-full max-h-full w-auto h-auto object-contain rounded-lg"
+                onClick={(e) => e.stopPropagation()}
+                style={{ maxWidth: '90vw', maxHeight: '90vh' }}
+              />
+            </AnimatePresence>
 
-        {images.length > 1 && (
-          <>
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                goToPrev();
-              }}
-              className="absolute left-4 text-white text-4xl hover:text-gray-300"
-              aria-label="Previous image"
-            >
-              ‹
-            </button>
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                goToNext();
-              }}
-              className="absolute right-4 text-white text-4xl hover:text-gray-300"
-              aria-label="Next image"
-            >
-              ›
-            </button>
-            <div className="absolute bottom-4 flex gap-2">
-              {images.map((_, idx) => (
+            {images.length > 1 && (
+              <>
                 <button
-                  key={images[idx].src}
                   onClick={(e) => {
                     e.stopPropagation();
-                    setCurrentIndex(idx);
+                    goToPrev();
                   }}
-                  className={`w-2 h-2 rounded-full ${
-                    idx === currentIndex ? 'bg-white' : 'bg-white/50'
-                  }`}
-                  aria-label={`Go to image ${idx + 1}`}
-                />
-              ))}
-            </div>
-          </>
-        )}
-      </div>
-    </div>
+                  className="absolute left-4 text-white/80 hover:text-white text-5xl w-12 h-12 flex items-center justify-center rounded-full hover:bg-white/10 transition-colors"
+                  aria-label="Previous image"
+                >
+                  ‹
+                </button>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    goToNext();
+                  }}
+                  className="absolute right-4 text-white/80 hover:text-white text-5xl w-12 h-12 flex items-center justify-center rounded-full hover:bg-white/10 transition-colors"
+                  aria-label="Next image"
+                >
+                  ›
+                </button>
+                <div className="absolute bottom-6 flex gap-2">
+                  {images.map((_, idx) => (
+                    <button
+                      key={images[idx].src}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setCurrentIndex(idx);
+                      }}
+                      className={`w-2 h-2 rounded-full transition-all ${
+                        idx === currentIndex
+                          ? 'bg-white w-6'
+                          : 'bg-white/50 hover:bg-white/70'
+                      }`}
+                      aria-label={`Go to image ${idx + 1}`}
+                    />
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 }
