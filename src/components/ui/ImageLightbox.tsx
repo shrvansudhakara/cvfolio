@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 interface ImageLightboxProps {
   images: { src: string; alt?: string }[];
@@ -15,17 +15,28 @@ export default function ImageLightbox({
 }: ImageLightboxProps) {
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
 
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+      } else if (e.key === 'ArrowRight') {
+        goToNext();
+      } else if (e.key === 'ArrowLeft') {
+        goToPrev();
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener('keydown', handleKeyDown);
+      return () => document.removeEventListener('keydown', handleKeyDown);
+    }
+  }, [isOpen, currentIndex]);
+
   if (!isOpen) return null;
 
-  const goToNext = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setCurrentIndex((currentIndex + 1) % images.length);
-  };
-
-  const goToPrev = (e: React.MouseEvent) => {
-    e.stopPropagation();
+  const goToNext = () => setCurrentIndex((currentIndex + 1) % images.length);
+  const goToPrev = () =>
     setCurrentIndex((currentIndex - 1 + images.length) % images.length);
-  };
 
   const handleClose = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -36,11 +47,14 @@ export default function ImageLightbox({
     <div
       className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center"
       onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Image gallery"
     >
       <button
         onClick={handleClose}
         className="absolute top-4 right-4 text-white text-2xl hover:text-gray-300 z-10"
-        aria-label="Close"
+        aria-label="Close gallery"
       >
         ×
       </button>
@@ -56,23 +70,29 @@ export default function ImageLightbox({
         {images.length > 1 && (
           <>
             <button
-              onClick={goToPrev}
+              onClick={(e) => {
+                e.stopPropagation();
+                goToPrev();
+              }}
               className="absolute left-4 text-white text-4xl hover:text-gray-300"
-              aria-label="Previous"
+              aria-label="Previous image"
             >
               ‹
             </button>
             <button
-              onClick={goToNext}
+              onClick={(e) => {
+                e.stopPropagation();
+                goToNext();
+              }}
               className="absolute right-4 text-white text-4xl hover:text-gray-300"
-              aria-label="Next"
+              aria-label="Next image"
             >
               ›
             </button>
             <div className="absolute bottom-4 flex gap-2">
               {images.map((_, idx) => (
                 <button
-                  key={idx}
+                  key={images[idx].src}
                   onClick={(e) => {
                     e.stopPropagation();
                     setCurrentIndex(idx);

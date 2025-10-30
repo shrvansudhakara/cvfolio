@@ -9,12 +9,10 @@ const { entry } = Astro.props;
 const { Content } = await render(entry);
 
 const images = entry.data.images 
-  ? await Promise.all(
-      entry.data.images.map(async (img) => ({
-        src: img.src,
-        alt: entry.data.title,
-      }))
-    )
+  ? entry.data.images.map((img) => ({
+      src: img.src,
+      alt: entry.data.title,
+    }))
   : [];
 ---
 
@@ -58,34 +56,38 @@ const images = entry.data.images
   import { createRoot } from 'react-dom/client';
   import { createElement } from 'react';
 
-  const thumbs = document.querySelectorAll('.work-image-thumb');
+  const container = document.querySelector('.flex.gap-2.flex-wrap.mt-2');
+  if (!container) return;
   
-  thumbs.forEach((thumb) => {
-    thumb.addEventListener('click', () => {
-      const images = JSON.parse(thumb.getAttribute('data-images') || '[]');
-      const index = parseInt(thumb.getAttribute('data-index') || '0');
-      
-      const container = document.createElement('div');
-      document.body.appendChild(container);
-      const root = createRoot(container);
-      
-      const closeHandler = () => {
-        root.unmount();
-        try {
-          document.body.removeChild(container);
-        } catch (e) {
-          // Container may have already been removed; ignore error
-        }
-      };
-      
-      root.render(
-        createElement(ImageLightbox, {
-          images,
-          isOpen: true,
-          initialIndex: index,
-          onClose: closeHandler,
-        })
-      );
-    });
-  });
+  const clickHandler = (event: Event) => {
+    const thumb = (event.target as HTMLElement).closest('.work-image-thumb');
+    if (!thumb || !container.contains(thumb)) return;
+    
+    const images = JSON.parse(thumb.getAttribute('data-images') || '[]');
+    const index = parseInt(thumb.getAttribute('data-index') || '0');
+    
+    const lightboxContainer = document.createElement('div');
+    document.body.appendChild(lightboxContainer);
+    const root = createRoot(lightboxContainer);
+    
+    const closeHandler = () => {
+      root.unmount();
+      try {
+        document.body.removeChild(lightboxContainer);
+      } catch (e) {
+        // Container may have already been removed; ignore error
+      }
+    };
+    
+    root.render(
+      createElement(ImageLightbox, {
+        images,
+        isOpen: true,
+        initialIndex: index,
+        onClose: closeHandler,
+      })
+    );
+  };
+  
+  container.addEventListener('click', clickHandler);
 </script>
