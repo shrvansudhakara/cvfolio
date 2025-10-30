@@ -58,32 +58,30 @@ const images = entry.data.images
   import { createRoot } from 'react-dom/client';
   import { createElement } from 'react';
 
-  document.addEventListener('DOMContentLoaded', () => {
-    const thumbs = document.querySelectorAll('.work-image-thumb');
-    
-    thumbs.forEach((thumb) => {
-      thumb.addEventListener('click', () => {
-        const images = JSON.parse(thumb.getAttribute('data-images') || '[]');
-        const index = parseInt(thumb.getAttribute('data-index') || '0');
-        
-        const container = document.createElement('div');
-        document.body.appendChild(container);
-        const root = createRoot(container);
-        
-        const closeHandler = () => {
-          root.unmount();
-          document.body.removeChild(container);
-        };
-        
-        root.render(
-          createElement(ImageLightbox, {
-            images,
-            isOpen: true,
-            initialIndex: index,
-            onClose: closeHandler,
-          })
-        );
-      });
+  const thumbs = document.querySelectorAll('.work-image-thumb');
+  
+  thumbs.forEach((thumb) => {
+    thumb.addEventListener('click', () => {
+      const images = JSON.parse(thumb.getAttribute('data-images') || '[]');
+      const index = parseInt(thumb.getAttribute('data-index') || '0');
+      
+      const container = document.createElement('div');
+      document.body.appendChild(container);
+      const root = createRoot(container);
+      
+      const closeHandler = () => {
+        root.unmount();
+        document.body.removeChild(container);
+      };
+      
+      root.render(
+        createElement(ImageLightbox, {
+          images,
+          isOpen: true,
+          initialIndex: index,
+          onClose: closeHandler,
+        })
+      );
     });
   });
 </script>
