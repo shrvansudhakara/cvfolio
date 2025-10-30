@@ -48,7 +48,7 @@ const jobCollection = defineCollection({
     company: z.string(),
     location: z.string(),
     from: z.number(),
-    to: z.number().or(z.enum(['Now'])),
+    to: z.number().optional(), // optional if currently working
     url: z.string(),
   }),
 });
