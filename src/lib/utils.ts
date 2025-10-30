@@ -1,5 +1,4 @@
 import { DEFAULT_CONFIGURATION } from './constants';
-import type { CollectionEntry } from 'astro:content';
 
 export const formatDate = (date: Date) => {
   const formatter = new Intl.DateTimeFormat('en-US', {
@@ -23,18 +22,41 @@ export const includeDraft = (draft: boolean) => {
   return draft !== true;
 };
 
-export const sortJobsByDate = (jobs: CollectionEntry<'jobs'>[]) => {
-  // Convert "Now" to current year, otherwise returns the year as is
-  const getEndYear = (job: CollectionEntry<'jobs'>) =>
-    job.data.to === 'Now' ? new Date().getFullYear() : job.data.to;
+/*
+ * Generic function for sorting items with start and optional end years
+ * - Items without an end year are considered ongoing and are sorted accordingly
+ * - Items are sorted by end year descending, then by start year descending
+ * - If end year is not present, current year is used for comparison
+ */
+export const sortByDateRange = <
+  T extends { data: { from: number; to?: number } },
+>(
+  items: T[],
+) => {
+  const getCurrentYear = () => new Date().getFullYear();
 
-  return jobs.sort((current, next) => {
-    // Compare end years first, then fall back to start years if end years are equal
-    const [currentEnd, nextEnd] = [getEndYear(current), getEndYear(next)];
+  return items.sort((current, next) => {
+    // Prioritize ongoing jobs (no 'to' field) first
+    const currentIsOngoing = current.data.to === undefined;
+    const nextIsOngoing = next.data.to === undefined;
+
+    // If one is ongoing and the other isn't, ongoing comes first
+    if (currentIsOngoing && !nextIsOngoing) return -1;
+    if (!currentIsOngoing && nextIsOngoing) return 1;
+
+    // If both are ongoing or both have end dates, sort by end year then start year
+    const currentEnd = current.data.to ?? getCurrentYear();
+    const nextEnd = next.data.to ?? getCurrentYear();
     return nextEnd - currentEnd || next.data.from - current.data.from;
   });
 };
 
-export const sortTalksByYear = (talks: CollectionEntry<'talks'>[]) => {
-  return talks.sort((a, b) => b.data.year - a.data.year);
+/*
+ * Generic function for sorting items by year in descending order
+ * - Items are sorted by year descending
+ */
+export const sortByYear = <T extends { data: { year: number } }>(
+  items: T[],
+) => {
+  return items.sort((a, b) => b.data.year - a.data.year);
 };
