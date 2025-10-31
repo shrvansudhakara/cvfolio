@@ -43,14 +43,16 @@ const linkCollection = defineCollection({
 
 const jobCollection = defineCollection({
   loader: glob({ pattern: '**/[^_]*.{md,mdx}', base: './src/content/jobs' }),
-  schema: z.object({
-    title: z.string(),
-    company: z.string(),
-    location: z.string(),
-    from: z.number(),
-    to: z.number().optional(), // optional if currently working
-    url: z.string(),
-  }),
+  schema: ({ image }) =>
+    z.object({
+      title: z.string(),
+      company: z.string(),
+      location: z.string(),
+      from: z.number(),
+      to: z.number().optional(), // optional if currently working
+      url: z.string(),
+      images: z.array(image()).optional(),
+    }),
 });
 
 const talkCollection = defineCollection({

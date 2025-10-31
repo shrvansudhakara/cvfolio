@@ -7,6 +7,13 @@ interface Props {
 
 const { entry } = Astro.props;
 const { Content } = await render(entry);
+
+const images = entry.data.images
+  ? entry.data.images.map((img) => ({
+      src: img.src,
+      alt: entry.data.title,
+    }))
+  : [];
 ---
 
 <li class="py-0.5">
@@ -24,6 +31,68 @@ const { Content } = await render(entry);
       <div class="prose dark:prose-invert prose-sm">
         <Content />
       </div>
+
+      {
+        images.length > 0 && (
+          <div class="flex gap-2 flex-wrap mt-2">
+            {images.map((image, idx) => (
+              <button
+                class="work-image-thumb overflow-hidden rounded-lg border border-border hover:opacity-80 transition-opacity"
+                data-images={JSON.stringify(images)}
+                data-index={idx}
+              >
+                <img
+                  src={image.src}
+                  alt={image.alt}
+                  class="w-20 h-20 object-cover"
+                />
+              </button>
+            ))}
+          </div>
+        )
+      }
     </div>
   </div>
 </li>
+
+<script>
+  import ImageLightbox from './ImageLightbox';
+  import { createRoot } from 'react-dom/client';
+  import { createElement } from 'react';
+
+  const container = document.querySelector('.flex.gap-2.flex-wrap.mt-2');
+
+  if (container) {
+    const clickHandler = (event: Event) => {
+      const thumb = (event.target as HTMLElement).closest('.work-image-thumb');
+      if (!thumb || !container.contains(thumb)) return;
+
+      const images = JSON.parse(thumb.getAttribute('data-images') || '[]');
+      const index = parseInt(thumb.getAttribute('data-index') || '0');
+
+      const lightboxContainer = document.createElement('div');
+      document.body.appendChild(lightboxContainer);
+      const root = createRoot(lightboxContainer);
+
+      const closeHandler = () => {
+        root.unmount();
+        try {
+          document.body.removeChild(lightboxContainer);
+        } catch (e) {
+          // Container may have already been removed; ignore error
+        }
+      };
+
+      root.render(
+        createElement(ImageLightbox, {
+          images,
+          isOpen: true,
+          initialIndex: index,
+          onClose: closeHandler,
+        }),
+      );
+    };
+
+    container.addEventListener('click', clickHandler);
+  }
+</script>
