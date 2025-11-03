@@ -34,13 +34,90 @@ const defaultConfig: SiteConfig = {
   },
 };
 
+function deepMerge(target: any, source: any): any {
+  // Recursively merge source into target
+  for (const key of Object.keys(source)) {
+    if (
+      source[key] &&
+      typeof source[key] === 'object' &&
+      !Array.isArray(source[key])
+    ) {
+      if (!target[key] || typeof target[key] !== 'object') {
+        target[key] = {};
+      }
+      deepMerge(target[key], source[key]);
+    } else {
+      if (target[key] === undefined) {
+        target[key] = source[key];
+      }
+    }
+  }
+  return target;
+}
+
+function isValidConfig(config: any): boolean {
+  if (
+    !config ||
+    typeof config !== 'object' ||
+    !config.sections ||
+    typeof config.sections !== 'object' ||
+    !config.elements ||
+    typeof config.elements !== 'object'
+  ) {
+    return false;
+  }
+  // Optionally, check for required keys
+  const sectionKeys = [
+    'about',
+    'workExperience',
+    'talks',
+    'writing',
+    'socialLinks',
+  ];
+  const elementKeys = [
+    'avatar',
+    'themeSwitch',
+    'header',
+    'footer',
+  ];
+  for (const key of sectionKeys) {
+    if (typeof config.sections[key] !== 'boolean') {
+      return false;
+    }
+  }
+  for (const key of elementKeys) {
+    if (typeof config.elements[key] !== 'boolean') {
+      return false;
+    }
+  }
+  return true;
+}
+
 export function getSiteConfig(): SiteConfig {
+  const configPath = path.join(process.cwd(), 'config.yml');
+  let loadedConfig: any = {};
   try {
-    const configPath = path.join(process.cwd(), 'config.yml');
     const fileContents = fs.readFileSync(configPath, 'utf8');
-    return yaml.load(fileContents) as SiteConfig;
-  } catch (error) {
-    console.warn('config.yml not found, using defaults');
+    loadedConfig = yaml.load(fileContents);
+    if (!loadedConfig || typeof loadedConfig !== 'object') {
+      console.warn('config.yml is empty or not a valid YAML object, using defaults');
+      return defaultConfig;
+    }
+    // Merge loaded config with defaults
+    const mergedConfig = deepMerge(loadedConfig, defaultConfig);
+    if (!isValidConfig(mergedConfig)) {
+      console.warn('config.yml is malformed or missing required fields, using defaults');
+      return defaultConfig;
+    }
+    return mergedConfig as SiteConfig;
+  } catch (error: any) {
+    if (error.code === 'ENOENT') {
+      console.warn('config.yml not found, using defaults');
+    } else if (error.name === 'YAMLException' || error instanceof yaml.YAMLException) {
+      console.warn('config.yml is malformed YAML, using defaults');
+    } else {
+      console.warn(`Error loading config.yml: ${error.message}, using defaults`);
+    }
     return defaultConfig;
   }
 }
