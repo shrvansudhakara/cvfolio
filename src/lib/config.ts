@@ -1,22 +1,25 @@
 import fs from 'fs';
 import path from 'path';
 import yaml from 'js-yaml';
+import { z } from 'astro:content';
 
-interface SiteConfig {
-  sections: {
-    about: boolean;
-    workExperience: boolean;
-    talks: boolean;
-    writing: boolean;
-    socialLinks: boolean;
-  };
-  elements: {
-    avatar: boolean;
-    themeSwitch: boolean;
-    header: boolean;
-    footer: boolean;
-  };
-}
+const SiteConfigSchema = z.object({
+  sections: z.object({
+    about: z.boolean(),
+    workExperience: z.boolean(),
+    talks: z.boolean(),
+    writing: z.boolean(),
+    socialLinks: z.boolean(),
+  }),
+  elements: z.object({
+    avatar: z.boolean(),
+    themeSwitch: z.boolean(),
+    header: z.boolean(),
+    footer: z.boolean(),
+  }),
+});
+
+type SiteConfig = z.infer<typeof SiteConfigSchema>;
 
 const defaultConfig: SiteConfig = {
   sections: {
@@ -55,42 +58,8 @@ function deepMerge(target: any, source: any): any {
   return target;
 }
 
-function isValidConfig(config: any): boolean {
-  if (
-    !config ||
-    typeof config !== 'object' ||
-    !config.sections ||
-    typeof config.sections !== 'object' ||
-    !config.elements ||
-    typeof config.elements !== 'object'
-  ) {
-    return false;
-  }
-  // Optionally, check for required keys
-  const sectionKeys = [
-    'about',
-    'workExperience',
-    'talks',
-    'writing',
-    'socialLinks',
-  ];
-  const elementKeys = [
-    'avatar',
-    'themeSwitch',
-    'header',
-    'footer',
-  ];
-  for (const key of sectionKeys) {
-    if (typeof config.sections[key] !== 'boolean') {
-      return false;
-    }
-  }
-  for (const key of elementKeys) {
-    if (typeof config.elements[key] !== 'boolean') {
-      return false;
-    }
-  }
-  return true;
+function isValidConfig(config: SiteConfig): config is SiteConfig {
+  return SiteConfigSchema.safeParse(config).success;
 }
 
 export function getSiteConfig(): SiteConfig {
@@ -100,23 +69,32 @@ export function getSiteConfig(): SiteConfig {
     const fileContents = fs.readFileSync(configPath, 'utf8');
     loadedConfig = yaml.load(fileContents);
     if (!loadedConfig || typeof loadedConfig !== 'object') {
-      console.warn('config.yml is empty or not a valid YAML object, using defaults');
+      console.warn(
+        'config.yml is empty or not a valid YAML object, using defaults',
+      );
       return defaultConfig;
     }
     // Merge loaded config with defaults
     const mergedConfig = deepMerge(loadedConfig, defaultConfig);
     if (!isValidConfig(mergedConfig)) {
-      console.warn('config.yml is malformed or missing required fields, using defaults');
+      console.warn(
+        'config.yml is malformed or missing required fields, using defaults',
+      );
       return defaultConfig;
     }
     return mergedConfig as SiteConfig;
   } catch (error: any) {
     if (error.code === 'ENOENT') {
       console.warn('config.yml not found, using defaults');
-    } else if (error.name === 'YAMLException' || error instanceof yaml.YAMLException) {
+    } else if (
+      error.name === 'YAMLException' ||
+      error instanceof yaml.YAMLException
+    ) {
       console.warn('config.yml is malformed YAML, using defaults');
     } else {
-      console.warn(`Error loading config.yml: ${error.message}, using defaults`);
+      console.warn(
+        `Error loading config.yml: ${error.message}, using defaults`,
+      );
     }
     return defaultConfig;
   }
